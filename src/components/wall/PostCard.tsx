@@ -10,18 +10,18 @@ interface PostCardProps {
 export function PostCard({ post, onToggleLike }: PostCardProps) {
   const author = post.author || "Greg Wientjes";
   const handle = post.handle || "@gregw";
-  const avatarColor = post.avatarColor || "bg-blue-600";
   const likes = post.likes ?? 0;
   const comments = post.comments ?? 0;
 
   return (
     <article className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4 hover:border-slate-300 transition-colors">
       <div className="flex gap-3">
-        <div
-          className={`w-10 h-10 rounded-full ${avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0`}
-        >
-          {author.charAt(0)}
-        </div>
+        {/* Default Profile Avatar */}
+        <img
+          src="/profile.jpg"
+          alt={author}
+          className="w-10 h-10 rounded-full object-cover shrink-0 bg-slate-200 border border-slate-200/60"
+        />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
