@@ -32,9 +32,21 @@ export function PostCard({ post, onToggleLike }: PostCardProps) {
             </span>
           </div>
 
-          <p className="text-sm text-slate-700 leading-relaxed mt-1.5">
-            {post.content}
-          </p>
+          {post.content && (
+            <p className="text-sm text-slate-700 leading-relaxed mt-1.5">
+              {post.content}
+            </p>
+          )}
+
+          {post.imageUrl && (
+            <div className="mt-3 rounded-xl overflow-hidden border border-slate-200/80">
+              <img
+                src={post.imageUrl}
+                alt="Post attachment"
+                className="max-h-96 w-full object-cover"
+              />
+            </div>
+          )}
 
           <div className="flex items-center gap-6 mt-3 pt-2 text-slate-400 text-xs">
             <button

@@ -44,7 +44,7 @@ export default function WallPage() {
     fetchPosts();
   }, []);
 
-  const handleAddPost = async (content: string) => {
+    const handleAddPost = async (content: string, imageUrl?: string) => {
     const { data, error } = await supabase
       .from("posts")
       .insert([
@@ -52,7 +52,7 @@ export default function WallPage() {
           author: "Greg Wientjes",
           handle: "@gregw",
           avatar_color: "bg-blue-600",
-          content,
+          content: content || "Shared a photo",
         },
       ])
       .select()
@@ -69,7 +69,8 @@ export default function WallPage() {
         author: data.author,
         handle: data.handle,
         avatarColor: data.avatar_color,
-        content: data.content,
+        content: content,
+        imageUrl,
         timestamp: "Just now",
         likes: data.likes,
         comments: data.comments,
@@ -77,6 +78,7 @@ export default function WallPage() {
       setPosts([newPost, ...posts]);
     }
   };
+
 
   const handleToggleLike = async (id: number) => {
     const target = posts.find((p) => p.id === id);

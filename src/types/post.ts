@@ -4,6 +4,7 @@ export interface Post {
   handle: string;
   avatarColor: string;
   content: string;
+  imageUrl?: string;
   timestamp: string;
   likes: number;
   comments: number;
