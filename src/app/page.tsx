@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { Post } from "@/types/post";
 import { Navbar } from "@/components/wall/Navbar";
 import { ProfileSidebar } from "@/components/wall/ProfileSidebar";
@@ -8,103 +9,93 @@ import { PostComposer } from "@/components/wall/PostComposer";
 import { PostCard } from "@/components/wall/PostCard";
 import { TrendingSidebar } from "@/components/wall/TrendingSidebar";
 
-const INITIAL_POSTS: Post[] = [
-  {
-    id: 1,
-    author: "Greg Wientjes",
-    handle: "@gregw",
-    avatarColor: "bg-blue-600",
-    content: "It worked!",
-    timestamp: "Just now",
-    likes: 4,
-    comments: 1,
-  },
-  {
-    id: 2,
-    author: "Greg Wientjes",
-    handle: "@gregw",
-    avatarColor: "bg-blue-600",
-    content: "Hello world! This is a live website.",
-    timestamp: "2m",
-    likes: 12,
-    comments: 3,
-  },
-  {
-    id: 3,
-    author: "Anna",
-    handle: "@anna_dev",
-    avatarColor: "bg-emerald-600",
-    content:
-      "Hey Greg, did you debug your coffee maker yet? Last cup tasted like JavaScript errors.",
-    timestamp: "2h",
-    likes: 28,
-    comments: 5,
-  },
-  {
-    id: 4,
-    author: "Adelaida",
-    handle: "@adelaida",
-    avatarColor: "bg-purple-600",
-    content:
-      "Greg, saw your last coding session—pretty sure you broke Stack Overflow again! 🧯",
-    timestamp: "3h",
-    likes: 41,
-    comments: 7,
-  },
-  {
-    id: 5,
-    author: "Juho",
-    handle: "@juho_codes",
-    avatarColor: "bg-amber-600",
-    content:
-      "Greg, are you still coding in pajamas, or have you upgraded to full-time sweatpants mode?",
-    timestamp: "4h",
-    likes: 19,
-    comments: 2,
-  },
-  {
-    id: 6,
-    author: "Sheryl",
-    handle: "@sheryl",
-    avatarColor: "bg-rose-600",
-    content:
-      "Greg, when are we gonna deploy your latest dance moves to production? #AgileDancer",
-    timestamp: "8h",
-    likes: 64,
-    comments: 9,
-  },
-];
-
 export default function WallPage() {
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddPost = (content: string) => {
-    const newPost: Post = {
-      id: Date.now(),
-      author: "Greg Wientjes",
-      handle: "@gregw",
-      avatarColor: "bg-blue-600",
-      content,
-      timestamp: "Just now",
-      likes: 0,
-      comments: 0,
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching posts:", error.message);
+      } else if (data) {
+        const formattedPosts: Post[] = data.map((row) => ({
+          id: row.id,
+          author: row.author,
+          handle: row.handle,
+          avatarColor: row.avatar_color,
+          content: row.content,
+          timestamp: new Date(row.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          likes: row.likes,
+          comments: row.comments,
+        }));
+        setPosts(formattedPosts);
+      }
+      setLoading(false);
     };
 
-    setPosts([newPost, ...posts]);
+    fetchPosts();
+  }, []);
+
+  const handleAddPost = async (content: string) => {
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([
+        {
+          author: "Greg Wientjes",
+          handle: "@gregw",
+          avatar_color: "bg-blue-600",
+          content,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error adding post:", error.message);
+      return;
+    }
+
+    if (data) {
+      const newPost: Post = {
+        id: data.id,
+        author: data.author,
+        handle: data.handle,
+        avatarColor: data.avatar_color,
+        content: data.content,
+        timestamp: "Just now",
+        likes: data.likes,
+        comments: data.comments,
+      };
+      setPosts([newPost, ...posts]);
+    }
   };
 
-  const handleToggleLike = (id: number) => {
+  const handleToggleLike = async (id: number) => {
+    const target = posts.find((p) => p.id === id);
+    if (!target) return;
+
+    const updatedLikes = target.liked ? target.likes - 1 : target.likes + 1;
+
     setPosts(
       posts.map((post) =>
         post.id === id
-          ? {
-              ...post,
-              liked: !post.liked,
-              likes: post.liked ? post.likes - 1 : post.likes + 1,
-            }
+          ? { ...post, liked: !post.liked, likes: updatedLikes }
           : post
       )
     );
+
+    await supabase
+      .from("posts")
+      .update({ likes: updatedLikes })
+      .eq("id", id);
   };
 
   return (
@@ -117,15 +108,25 @@ export default function WallPage() {
         <section className="lg:col-span-6 space-y-4">
           <PostComposer onAddPost={handleAddPost} />
 
-          <div className="space-y-3">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onToggleLike={handleToggleLike}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-sm text-slate-500">
+              Loading posts from Supabase...
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-sm text-slate-500">
+              No posts yet. Be the first to share something!
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onToggleLike={handleToggleLike}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         <TrendingSidebar />
