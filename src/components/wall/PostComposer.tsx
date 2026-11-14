@@ -7,7 +7,7 @@ import { Image as ImageIcon, Smile, X } from "lucide-react";
 
 interface PostComposerProps {
   avatarUrl: string;
-  onAddPost: (content: string) => Promise<void>;
+  onAddPost: (content: string, file?: File | null) => Promise<void>;
 }
 
 export function PostComposer({ avatarUrl, onAddPost }: PostComposerProps) {
@@ -40,11 +40,11 @@ export function PostComposer({ avatarUrl, onAddPost }: PostComposerProps) {
 
   const handleSubmit = async () => {
     const trimmed = input.trim();
-    if (!trimmed || isSubmitting) return;
+    if ((!trimmed && !selectedFile) || isSubmitting) return;
 
     setIsSubmitting(true);
     try {
-      await onAddPost(trimmed);
+      await onAddPost(trimmed, selectedFile);
       setInput("");
       clearImage();
     } finally {
@@ -74,16 +74,20 @@ export function PostComposer({ avatarUrl, onAddPost }: PostComposerProps) {
               <img
                 src={previewUrl}
                 alt={selectedFile?.name || "Upload preview"}
-                className="max-h-72 w-full object-cover"
+                className={`max-h-72 w-full object-cover transition-all ${
+                  isSubmitting ? "opacity-50 grayscale" : ""
+                }`}
               />
-              <button
-                type="button"
-                onClick={clearImage}
-                aria-label="Remove image"
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/75 text-white hover:bg-slate-900 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {!isSubmitting && (
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  aria-label="Remove image"
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/75 text-white hover:bg-slate-900 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
 
@@ -99,6 +103,7 @@ export function PostComposer({ avatarUrl, onAddPost }: PostComposerProps) {
             <div className="flex items-center gap-1 text-slate-400">
               <button
                 type="button"
+                disabled={isSubmitting}
                 onClick={() => fileInputRef.current?.click()}
                 className={`p-1.5 rounded-full transition-colors ${
                   previewUrl
@@ -121,7 +126,7 @@ export function PostComposer({ avatarUrl, onAddPost }: PostComposerProps) {
 
             <Button
               onClick={handleSubmit}
-              disabled={!input.trim() || isSubmitting}
+              disabled={(!input.trim() && !selectedFile) || isSubmitting}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 px-5 rounded-full text-xs font-semibold shadow-sm"
             >
               {isSubmitting ? "Sharing..." : "Share"}

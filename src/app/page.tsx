@@ -32,13 +32,12 @@ export default function WallPage() {
     loadLatestAvatar();
   }, []);
 
-
   // Fetch initial posts and subscribe to Realtime updates
   useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("id, user_id, body, created_at")
+        .select("id, user_id, body, image_url, created_at")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -48,6 +47,7 @@ export default function WallPage() {
           id: row.id,
           userId: row.user_id,
           body: row.body,
+          imageUrl: row.image_url || undefined,
           timestamp: new Date(row.created_at).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -76,6 +76,7 @@ export default function WallPage() {
             id: string;
             user_id: string | null;
             body: string;
+            image_url?: string | null;
             created_at: string;
           };
 
@@ -87,6 +88,7 @@ export default function WallPage() {
                 id: newRow.id,
                 userId: newRow.user_id,
                 body: newRow.body,
+                imageUrl: newRow.image_url || undefined,
                 timestamp: "Just now",
                 likes: 0,
                 comments: 0,
@@ -103,11 +105,37 @@ export default function WallPage() {
     };
   }, []);
 
-  const handleAddPost = async (body: string) => {
+  const handleAddPost = async (body: string, file?: File | null) => {
+    let uploadedImageUrl: string | null = null;
+
+    // 1. Upload image to Supabase Storage if a file was selected
+    if (file) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("post-images")
+        .upload(fileName, file, {
+          contentType: file.type,
+        });
+
+      if (uploadError) {
+        alert(`Image upload failed: ${uploadError.message}`);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("post-images")
+        .getPublicUrl(fileName);
+
+      uploadedImageUrl = urlData.publicUrl;
+    }
+
+    // 2. Insert post row with text and optional image_url
     const { data, error } = await supabase
       .from("posts")
-      .insert([{ body }])
-      .select("id, user_id, body, created_at")
+      .insert([{ body, image_url: uploadedImageUrl }])
+      .select("id, user_id, body, image_url, created_at")
       .single();
 
     if (error) {
@@ -123,6 +151,7 @@ export default function WallPage() {
             id: data.id,
             userId: data.user_id,
             body: data.body,
+            imageUrl: data.image_url || undefined,
             timestamp: "Just now",
             likes: 0,
             comments: 0,
