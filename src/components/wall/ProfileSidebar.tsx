@@ -8,7 +8,7 @@ interface ProfileSidebarProps {
 
 export function ProfileSidebar({ postCount }: ProfileSidebarProps) {
   return (
-    <aside className="lg:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden sticky top-20">
+    <aside className="lg:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden lg:sticky lg:top-20">
       <div className="h-20 bg-gradient-to-r from-blue-600 to-indigo-600" />
 
       <div className="px-5 pb-5">

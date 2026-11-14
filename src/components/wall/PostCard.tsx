@@ -37,9 +37,10 @@ export function PostCard({ post, onToggleLike }: PostCardProps) {
           </div>
 
           {post.body && (
-            <p className="text-sm text-slate-700 leading-relaxed mt-1.5">
-              {post.body}
+            <p className="text-sm text-slate-700 leading-relaxed mt-1.5 break-words">
+            {post.body}
             </p>
+
           )}
 
           {post.imageUrl && (

@@ -59,13 +59,14 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
           alt="Greg"
           className="w-10 h-10 rounded-full object-cover shrink-0 bg-slate-200"
         />
-        <div className="flex-1">
+        {/* Added min-w-0 so flex-1 respects parent width */}
+        <div className="flex-1 min-w-0">
           <Textarea
             placeholder="What's on your mind?"
             value={input}
             disabled={isSubmitting}
             onChange={(e) => setInput(e.target.value.slice(0, maxChars))}
-            className="min-h-[84px] bg-slate-50/70 border-slate-200 focus-visible:ring-blue-500 resize-none text-sm rounded-lg"
+            className="w-full min-h-[84px] bg-slate-50/70 border-slate-200 focus-visible:ring-blue-500 resize-none text-sm rounded-lg break-words"
           />
 
           {previewUrl && (
@@ -123,7 +124,7 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
               disabled={!input.trim() || isSubmitting}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 px-5 rounded-full text-xs font-semibold shadow-sm"
             >
-              {isSubmitting ? "Posting..." : "Post"}
+              {isSubmitting ? "Sharing..." : "Share"}
             </Button>
           </div>
         </div>
