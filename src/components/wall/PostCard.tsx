@@ -4,37 +4,41 @@ import { Post } from "@/types/post";
 
 interface PostCardProps {
   post: Post;
-  onToggleLike: (id: number) => void;
+  onToggleLike: (id: string) => void;
 }
 
 export function PostCard({ post, onToggleLike }: PostCardProps) {
+  const author = post.author || "Greg Wientjes";
+  const handle = post.handle || "@gregw";
+  const avatarColor = post.avatarColor || "bg-blue-600";
+  const likes = post.likes ?? 0;
+  const comments = post.comments ?? 0;
+
   return (
     <article className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4 hover:border-slate-300 transition-colors">
       <div className="flex gap-3">
         <div
-          className={`w-10 h-10 rounded-full ${post.avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0`}
+          className={`w-10 h-10 rounded-full ${avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0`}
         >
-          {post.author.charAt(0)}
+          {author.charAt(0)}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 truncate">
               <h3 className="text-sm font-bold text-slate-900 truncate">
-                {post.author}
+                {author}
               </h3>
-              <span className="text-xs text-slate-400 truncate">
-                {post.handle}
-              </span>
+              <span className="text-xs text-slate-400 truncate">{handle}</span>
             </div>
             <span className="text-xs text-slate-400 shrink-0">
               {post.timestamp}
             </span>
           </div>
 
-          {post.content && (
+          {post.body && (
             <p className="text-sm text-slate-700 leading-relaxed mt-1.5">
-              {post.content}
+              {post.body}
             </p>
           )}
 
@@ -59,7 +63,7 @@ export function PostCard({ post, onToggleLike }: PostCardProps) {
               <Heart
                 className={`w-4 h-4 ${post.liked ? "fill-rose-600" : ""}`}
               />
-              <span>{post.likes}</span>
+              <span>{likes}</span>
             </button>
 
             <button
@@ -67,7 +71,7 @@ export function PostCard({ post, onToggleLike }: PostCardProps) {
               className="flex items-center gap-1.5 hover:text-blue-600 transition-colors"
             >
               <MessageCircle className="w-4 h-4" />
-              <span>{post.comments}</span>
+              <span>{comments}</span>
             </button>
 
             <button

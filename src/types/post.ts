@@ -1,12 +1,13 @@
 export interface Post {
-  id: number;
-  author: string;
-  handle: string;
-  avatarColor: string;
-  content: string;
+  id: string;
+  body: string;
+  userId?: string | null;
+  author?: string;
+  handle?: string;
+  avatarColor?: string;
   imageUrl?: string;
   timestamp: string;
-  likes: number;
-  comments: number;
+  likes?: number;
+  comments?: number;
   liked?: boolean;
 }

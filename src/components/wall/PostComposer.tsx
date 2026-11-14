@@ -6,11 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Image as ImageIcon, Smile, X } from "lucide-react";
 
 interface PostComposerProps {
-  onAddPost: (content: string, imageUrl?: string) => void;
+  onAddPost: (content: string) => Promise<void>;
 }
 
 export function PostComposer({ onAddPost }: PostComposerProps) {
   const [input, setInput] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,13 +37,18 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmed = input.trim();
-    if (!trimmed && !previewUrl) return;
+    if (!trimmed || isSubmitting) return;
 
-    onAddPost(trimmed, previewUrl || undefined);
-    setInput("");
-    clearImage();
+    setIsSubmitting(true);
+    try {
+      await onAddPost(trimmed);
+      setInput("");
+      clearImage();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -57,11 +63,11 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
           <Textarea
             placeholder="What's on your mind?"
             value={input}
+            disabled={isSubmitting}
             onChange={(e) => setInput(e.target.value.slice(0, maxChars))}
             className="min-h-[84px] bg-slate-50/70 border-slate-200 focus-visible:ring-blue-500 resize-none text-sm rounded-lg"
           />
 
-          {/* Local Photo Preview */}
           {previewUrl && (
             <div className="relative mt-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
               <img
@@ -77,15 +83,9 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
               >
                 <X className="w-4 h-4" />
               </button>
-              {selectedFile && (
-                <div className="px-3 py-1.5 text-xs text-slate-500 bg-white/90 border-t border-slate-100 truncate">
-                  {selectedFile.name} · Local preview only
-                </div>
-              )}
             </div>
           )}
 
-          {/* Hidden File Input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -120,10 +120,10 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
 
             <Button
               onClick={handleSubmit}
-              disabled={!input.trim() && !previewUrl}
+              disabled={!input.trim() || isSubmitting}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 px-5 rounded-full text-xs font-semibold shadow-sm"
             >
-              Post
+              {isSubmitting ? "Posting..." : "Post"}
             </Button>
           </div>
         </div>

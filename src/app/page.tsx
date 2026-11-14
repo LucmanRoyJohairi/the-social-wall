@@ -17,7 +17,7 @@ export default function WallPage() {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("*")
+        .select("id, user_id, body, created_at")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -25,16 +25,14 @@ export default function WallPage() {
       } else if (data) {
         const formattedPosts: Post[] = data.map((row) => ({
           id: row.id,
-          author: row.author,
-          handle: row.handle,
-          avatarColor: row.avatar_color,
-          content: row.content,
+          userId: row.user_id,
+          body: row.body,
           timestamp: new Date(row.created_at).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           }),
-          likes: row.likes,
-          comments: row.comments,
+          likes: 0,
+          comments: 0,
         }));
         setPosts(formattedPosts);
       }
@@ -44,60 +42,44 @@ export default function WallPage() {
     fetchPosts();
   }, []);
 
-    const handleAddPost = async (content: string, imageUrl?: string) => {
+  const handleAddPost = async (body: string) => {
     const { data, error } = await supabase
       .from("posts")
-      .insert([
-        {
-          author: "Greg Wientjes",
-          handle: "@gregw",
-          avatar_color: "bg-blue-600",
-          content: content || "Shared a photo",
-        },
-      ])
-      .select()
+      .insert([{ body }])
+      .select("id, user_id, body, created_at")
       .single();
 
     if (error) {
-      console.error("Error adding post:", error.message);
+      console.error("Error saving post to Supabase:", error.message);
+      alert(`Failed to post: ${error.message}`);
       return;
     }
 
     if (data) {
       const newPost: Post = {
         id: data.id,
-        author: data.author,
-        handle: data.handle,
-        avatarColor: data.avatar_color,
-        content: content,
-        imageUrl,
+        userId: data.user_id,
+        body: data.body,
         timestamp: "Just now",
-        likes: data.likes,
-        comments: data.comments,
+        likes: 0,
+        comments: 0,
       };
-      setPosts([newPost, ...posts]);
+      setPosts((prev) => [newPost, ...prev]);
     }
   };
 
-
-  const handleToggleLike = async (id: number) => {
-    const target = posts.find((p) => p.id === id);
-    if (!target) return;
-
-    const updatedLikes = target.liked ? target.likes - 1 : target.likes + 1;
-
-    setPosts(
-      posts.map((post) =>
-        post.id === id
-          ? { ...post, liked: !post.liked, likes: updatedLikes }
-          : post
-      )
+  const handleToggleLike = (id: string) => {
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== id) return post;
+        const currentLikes = post.likes ?? 0;
+        return {
+          ...post,
+          liked: !post.liked,
+          likes: post.liked ? currentLikes - 1 : currentLikes + 1,
+        };
+      })
     );
-
-    await supabase
-      .from("posts")
-      .update({ likes: updatedLikes })
-      .eq("id", id);
   };
 
   return (
