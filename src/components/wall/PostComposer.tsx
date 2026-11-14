@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Image as ImageIcon, Smile, X } from "lucide-react";
 
 interface PostComposerProps {
+  avatarUrl: string;
   onAddPost: (content: string) => Promise<void>;
 }
 
-export function PostComposer({ onAddPost }: PostComposerProps) {
+export function PostComposer({ avatarUrl, onAddPost }: PostComposerProps) {
   const [input, setInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -55,11 +56,10 @@ export function PostComposer({ onAddPost }: PostComposerProps) {
     <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4">
       <div className="flex gap-3">
         <img
-          src="/profile.jpg"
+          src={avatarUrl}
           alt="Greg"
           className="w-10 h-10 rounded-full object-cover shrink-0 bg-slate-200"
         />
-        {/* Added min-w-0 so flex-1 respects parent width */}
         <div className="flex-1 min-w-0">
           <Textarea
             placeholder="What's on your mind?"

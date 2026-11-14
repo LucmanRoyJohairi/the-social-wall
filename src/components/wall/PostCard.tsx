@@ -4,10 +4,11 @@ import { Post } from "@/types/post";
 
 interface PostCardProps {
   post: Post;
+  avatarUrl: string;
   onToggleLike: (id: string) => void;
 }
 
-export function PostCard({ post, onToggleLike }: PostCardProps) {
+export function PostCard({ post, avatarUrl, onToggleLike }: PostCardProps) {
   const author = post.author || "Greg Wientjes";
   const handle = post.handle || "@gregw";
   const likes = post.likes ?? 0;
@@ -16,9 +17,8 @@ export function PostCard({ post, onToggleLike }: PostCardProps) {
   return (
     <article className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4 hover:border-slate-300 transition-colors">
       <div className="flex gap-3">
-        {/* Default Profile Avatar */}
         <img
-          src="/profile.jpg"
+          src={avatarUrl}
           alt={author}
           className="w-10 h-10 rounded-full object-cover shrink-0 bg-slate-200 border border-slate-200/60"
         />
@@ -38,9 +38,8 @@ export function PostCard({ post, onToggleLike }: PostCardProps) {
 
           {post.body && (
             <p className="text-sm text-slate-700 leading-relaxed mt-1.5 break-words">
-            {post.body}
+              {post.body}
             </p>
-
           )}
 
           {post.imageUrl && (

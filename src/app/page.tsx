@@ -12,9 +12,29 @@ import { TrendingSidebar } from "@/components/wall/TrendingSidebar";
 export default function WallPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState("/profile.jpg");
 
+  // Load latest avatar from Supabase Storage on mount
   useEffect(() => {
-    // 1. Initial fetch when the page loads
+    const loadLatestAvatar = async () => {
+      const { data } = await supabase.storage.from("avatars").list("", {
+        search: "current-avatar",
+      });
+
+      if (data && data.some((file) => file.name === "current-avatar")) {
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl("current-avatar");
+        setAvatarUrl(`${urlData.publicUrl}?t=${Date.now()}`);
+      }
+    };
+
+    loadLatestAvatar();
+  }, []);
+
+
+  // Fetch initial posts and subscribe to Realtime updates
+  useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("posts")
@@ -42,7 +62,6 @@ export default function WallPage() {
 
     fetchPosts();
 
-    // 2. Real-time subscription for new rows
     const channel = supabase
       .channel("realtime-posts")
       .on(
@@ -61,25 +80,24 @@ export default function WallPage() {
           };
 
           setPosts((prev) => {
-            // Avoid duplicates if this browser tab already added the post
             if (prev.some((p) => p.id === newRow.id)) return prev;
 
-            const incomingPost: Post = {
-              id: newRow.id,
-              userId: newRow.user_id,
-              body: newRow.body,
-              timestamp: "Just now",
-              likes: 0,
-              comments: 0,
-            };
-
-            return [incomingPost, ...prev];
+            return [
+              {
+                id: newRow.id,
+                userId: newRow.user_id,
+                body: newRow.body,
+                timestamp: "Just now",
+                likes: 0,
+                comments: 0,
+              },
+              ...prev,
+            ];
           });
         }
       )
       .subscribe();
 
-    // 3. Clean up WebSocket connection when leaving the page
     return () => {
       supabase.removeChannel(channel);
     };
@@ -134,10 +152,14 @@ export default function WallPage() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <ProfileSidebar postCount={posts.length} />
+        <ProfileSidebar
+          postCount={posts.length}
+          avatarUrl={avatarUrl}
+          onAvatarChange={setAvatarUrl}
+        />
 
         <section className="lg:col-span-6 space-y-4">
-          <PostComposer onAddPost={handleAddPost} />
+          <PostComposer avatarUrl={avatarUrl} onAddPost={handleAddPost} />
 
           {loading ? (
             <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-sm text-slate-500">
@@ -153,6 +175,7 @@ export default function WallPage() {
                 <PostCard
                   key={post.id}
                   post={post}
+                  avatarUrl={avatarUrl}
                   onToggleLike={handleToggleLike}
                 />
               ))}
