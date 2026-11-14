@@ -64,7 +64,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ### 3. Set Up Supabase Database & Storage
-
+<!-- 
 Run the following SQL in your **Supabase Dashboard → SQL Editor** to create the `posts` table, enable Realtime, configure Row-Level Security (RLS), and create the public storage buckets:
 
 ```sql
@@ -110,7 +110,7 @@ on storage.objects for select using (bucket_id = 'post-images');
 
 create policy "Public upload post-images"
 on storage.objects for insert with check (bucket_id = 'post-images');
-```
+``` -->
 
 ### 4. Run the Development Server
 
