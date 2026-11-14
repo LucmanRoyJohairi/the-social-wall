@@ -19,7 +19,7 @@ export function TrendingSidebar() {
             <p className="text-slate-400">89 engineers discussing</p>
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Last News</p>
+            <p className="font-semibold text-slate-800">Latest News</p>
             <p className="text-slate-400">Trending in California</p>
           </div>
         </div>

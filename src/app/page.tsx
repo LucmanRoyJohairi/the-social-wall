@@ -14,6 +14,7 @@ export default function WallPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Initial fetch when the page loads
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("posts")
@@ -40,6 +41,48 @@ export default function WallPage() {
     };
 
     fetchPosts();
+
+    // 2. Real-time subscription for new rows
+    const channel = supabase
+      .channel("realtime-posts")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "posts",
+        },
+        (payload) => {
+          const newRow = payload.new as {
+            id: string;
+            user_id: string | null;
+            body: string;
+            created_at: string;
+          };
+
+          setPosts((prev) => {
+            // Avoid duplicates if this browser tab already added the post
+            if (prev.some((p) => p.id === newRow.id)) return prev;
+
+            const incomingPost: Post = {
+              id: newRow.id,
+              userId: newRow.user_id,
+              body: newRow.body,
+              timestamp: "Just now",
+              likes: 0,
+              comments: 0,
+            };
+
+            return [incomingPost, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
+    // 3. Clean up WebSocket connection when leaving the page
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleAddPost = async (body: string) => {
@@ -50,21 +93,25 @@ export default function WallPage() {
       .single();
 
     if (error) {
-      console.error("Error saving post to Supabase:", error.message);
       alert(`Failed to post: ${error.message}`);
       return;
     }
 
     if (data) {
-      const newPost: Post = {
-        id: data.id,
-        userId: data.user_id,
-        body: data.body,
-        timestamp: "Just now",
-        likes: 0,
-        comments: 0,
-      };
-      setPosts((prev) => [newPost, ...prev]);
+      setPosts((prev) => {
+        if (prev.some((p) => p.id === data.id)) return prev;
+        return [
+          {
+            id: data.id,
+            userId: data.user_id,
+            body: data.body,
+            timestamp: "Just now",
+            likes: 0,
+            comments: 0,
+          },
+          ...prev,
+        ];
+      });
     }
   };
 
